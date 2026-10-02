@@ -1,0 +1,9 @@
+citHeader("To cite fastcramer in publications use:")
+bibentry(
+  bibtype = "Manual",
+  title   = "fastcramer: Fast Cramér Multivariate Two-Sample Statistic and Permutation Tests",
+  author  = person("Alexander C.", "Furnas"),
+  year    = "2026",
+  note    = "R package version 0.1.0",
+  url     = "https://github.com/alexanderfurnas/fastcramer"
+)

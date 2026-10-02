@@ -1,0 +1,9 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^README\.Rmd$
+^\.git$
+^\.github$
+^paper$
+^CONTRIBUTING\.md$
+^CODE_OF_CONDUCT\.md$
+^\.gitignore$

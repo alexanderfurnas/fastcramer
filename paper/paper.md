@@ -114,10 +114,17 @@ category so that category composition is held fixed under the null:
 
 ```r
 library(fastcramer)
-cramer_statistic(x, y)                                    # exact statistic, 0.3 s at 5,000 x 5,000
-cramer_test(x, y, replicates = 999, block = block)        # permutation p-value, labels shuffled within category
-boot <- cramer_bootstrap(x, y, replicates = 1000, draw = 5000, block = block)
-boot$summary$exceedance                                   # share of observed > permuted draws
+
+# the exact statistic: 0.3 s for two samples of 5,000 in 768 dimensions
+cramer_statistic(x, y)
+
+# permutation p-value, labels shuffled within category
+cramer_test(x, y, replicates = 999, block = block)
+
+# observed draws against a blocked permutation null
+boot <- cramer_bootstrap(x, y, replicates = 1000, draw = 5000,
+                         block = block)
+boot$summary$exceedance   # share of observed > permuted draws
 ```
 
 The package vignette (`vignette("fastcramer")`) walks through this design on

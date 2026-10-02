@@ -9,7 +9,7 @@ tags:
   - energy distance
 authors:
   - name: Alexander C. Furnas
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0001-8006-7798
     affiliation: "1, 2"
 affiliations:
   - name: Kellogg School of Management, Northwestern University, USA

@@ -3,7 +3,8 @@ Type: Package
 Title: Fast Cramér Multivariate Two-Sample Statistic and Permutation Tests
 Version: 0.1.0
 Authors@R: c(
-    person("Alexander C.", "Furnas", email = "zfurnas@gmail.com", role = c("aut", "cre")))
+    person("Alexander C.", "Furnas", email = "zfurnas@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-8006-7798")))
 Description: Computes the Cramér multivariate two-sample statistic of Baringhaus and
     Franz (2004) <doi:10.1016/S0047-259X(03)00079-4> exactly as the 'cramer' package does,
     but from three mean pairwise distances evaluated with BLAS matrix products and a fused

@@ -17,7 +17,7 @@ set.seed(20261002)
 
 ## The question
 
-Suppose each observation is a vector, such as a text embedding of a paper, and
+Suppose each observation is a vector, such as a text embedding of a document, and
 observations belong to one of two groups. Do the two groups occupy different
 regions of the space? The Cramér two-sample test (Baringhaus & Franz 2004)
 answers this without a parametric model. Its statistic compares the mean
@@ -46,16 +46,16 @@ library(fastcramer)
 d <- 768
 n_topics <- 12
 topic_centres <- matrix(rnorm(n_topics * d, sd = 0.5), n_topics)
-partisan_axis <- rnorm(d); partisan_axis <- partisan_axis / sqrt(sum(partisan_axis^2))
+group_axis <- rnorm(d); group_axis <- group_axis / sqrt(sum(group_axis^2))
 
 simulate_group <- function(n, shift, topic_probs) {
   topic <- sample(n_topics, n, replace = TRUE, prob = topic_probs)
-  emb   <- topic_centres[topic, ] + matrix(rnorm(n * d), n) + shift * matrix(partisan_axis, n, d, byrow = TRUE)
+  emb   <- topic_centres[topic, ] + matrix(rnorm(n * d), n) + shift * matrix(group_axis, n, d, byrow = TRUE)
   list(emb = emb, topic = topic)
 }
 
 # group A: 3,000 observations, spread over topics; group B: 600, concentrated
-# in a few topics AND shifted along the partisan axis
+# in a few topics AND shifted along the group axis
 A <- simulate_group(3000, shift = 0,   topic_probs = rep(1, n_topics))
 B <- simulate_group(600,  shift = 0.6, topic_probs = c(rep(3, 4), rep(1, n_topics - 4)))
 ```
@@ -106,15 +106,15 @@ c(unblocked = res_free$p.value, within_topic = res_blocked$p.value)
 
 The blocked null typically has larger statistics than the free null, because
 topic composition is no longer "explained away" by the permutation, so the
-test is more conservative. Here the shift along the partisan axis survives it.
+test is more conservative. Here the shift along the group axis survives it.
 
 ## Very large samples: bootstrap draws against a blocked null
 
 When the groups contain hundreds of thousands of observations, even a fast
 statistic cannot be evaluated on the full data, and one would not want to:
 with that many observations any difference is "significant". The design used
-in Furnas, Gao, Yin and Wang (2026) instead compares two distributions of
-replicates. Each *observed* replicate draws `draw` observations with
+in the motivating application (Furnas, Gao, Yin and Wang 2026) instead compares
+two distributions of replicates. Each *observed* replicate draws `draw` observations with
 replacement from each group and computes the statistic; each *permuted*
 replicate first shuffles the group labels within strata, then draws in the
 same way. `cramer_bootstrap()` runs both and summarises them by

@@ -49,9 +49,9 @@ bootstrap-versus-blocked-null design for samples too large to test in full.
 
 Dense vector representations of documents, molecules, images and genomes have
 made distribution-level comparisons of two groups a routine question in the
-social and natural sciences: do papers written by two groups of authors,
-grants funded by two agencies, or products of two firms differ in content
-once measured topics are held fixed? The Cramér statistic is well suited to
+social and natural sciences: do the documents produced by two groups, the
+items funded by two agencies, or the products of two firms differ in content
+once measured categories are held fixed? The Cramér statistic is well suited to
 such questions because it is distribution-free, consistent against all
 alternatives, and interpretable as an energy distance [@szekely2013], but
 the available implementation forces a choice between tiny subsamples and
@@ -87,15 +87,15 @@ the fused kernel is memory-bound and performs similarly on either.
 
 # Example
 
-Two groups of 768-dimensional embeddings, with a nuisance "topic" structure,
-are compared on the full samples, then with labels permuted within topic so
-that topic composition is held fixed under the null:
+Two groups of 768-dimensional embeddings, with a nuisance category structure
+(`block`), are compared on the full samples, then with labels permuted within
+category so that category composition is held fixed under the null:
 
 ```r
 library(fastcramer)
 cramer_statistic(x, y)                                    # exact statistic, 0.3 s at 5,000 x 5,000
-cramer_test(x, y, replicates = 999, block = topic)        # permutation p-value, labels shuffled within topic
-boot <- cramer_bootstrap(x, y, replicates = 1000, draw = 5000, block = topic)
+cramer_test(x, y, replicates = 999, block = block)        # permutation p-value, labels shuffled within category
+boot <- cramer_bootstrap(x, y, replicates = 1000, draw = 5000, block = block)
 boot$summary$exceedance                                   # share of observed > permuted draws
 ```
 

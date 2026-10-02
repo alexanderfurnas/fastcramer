@@ -27,12 +27,12 @@ cramer_test(x[1:300, ], y[1:300, ], 999)     # permutation test
 cramer_bootstrap(x, y, replicates = 100, block = sample(1:20, 10000, TRUE))
 ```
 
-`cramer_bootstrap()` implements the design used in Furnas, Gao, Yin & Wang,
-*Partisan disparities in the production and uptake of science*: observed
-statistics from repeated draws of `draw` observations per group, compared with
-draws taken after permuting group labels within strata (`block`), summarised
-by the exceedance probability and the percentile interval of the pairwise
-differences.
+`cramer_bootstrap()` compares observed statistics from repeated draws of `draw`
+observations per group with draws taken after permuting group labels within
+strata (`block`), summarised by the exceedance probability and the percentile
+interval of the pairwise differences. This is the design of the motivating
+application, Furnas, Gao, Yin & Wang, *Partisan disparities in the production
+and uptake of science* (2026).
 
 A worked example, including the blocked permutation null and the bootstrap
 design, is in the vignette: `vignette("fastcramer")` after installation, or

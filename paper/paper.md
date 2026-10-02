@@ -134,8 +134,7 @@ and the percentile interval.
 
 # Acknowledgements
 
-Development was supported by the Air Force Office of Scientific Research
-under award FA9550-19-1-0354. Portions of the package code, tests, and
+Portions of the package code, tests, and
 documentation, and of this paper, were drafted with the assistance of a large
 language model (Claude, Anthropic). The author reviewed, tested, and
 validated all code, including the comparison against `cramer::cramer.test()`,

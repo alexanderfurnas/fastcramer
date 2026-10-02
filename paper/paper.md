@@ -85,6 +85,27 @@ The implementation depends only on `Rcpp` and the BLAS shipped with R; a
 tuned BLAS such as OpenBLAS or Apple's vecLib speeds the pure-R reference but
 the fused kernel is memory-bound and performs similarly on either.
 
+# Inference
+
+The three functions have different inferential status, and the package
+documents them accordingly. `cramer_statistic()` is the statistic of
+@baringhaus2004, a scaled energy distance [@szekely2013] that is zero exactly
+when the two distributions coincide, so a test based on it is consistent
+against every alternative and requires no assumption about the direction of
+a difference. `cramer_test()` is a Monte Carlo permutation test; its p-value
+has exact level when observations are exchangeable between the groups under
+the null, and with `block` that condition becomes exchangeability within
+strata, so the blocked test asks whether group membership carries information
+beyond the stratum. `cramer_bootstrap()` is descriptive rather than a test:
+the exceedance probability is a probability of superiority between the two
+replicate distributions, and the percentile interval describes
+replicate-to-replicate variability at the chosen draw size, not uncertainty
+about a population quantity. Both depend on `draw` through the $mn/(m+n)$
+scale of the statistic and are comparable across groups only at a common draw
+size. The design deliberately avoids testing the two replicate means against
+each other, because such a p-value scales with the number of replicates
+rather than with the data.
+
 # Example
 
 Two groups of 768-dimensional embeddings, with a nuisance category structure

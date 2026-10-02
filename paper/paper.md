@@ -85,6 +85,25 @@ The implementation depends only on `Rcpp` and the BLAS shipped with R; a
 tuned BLAS such as OpenBLAS or Apple's vecLib speeds the pure-R reference but
 the fused kernel is memory-bound and performs similarly on either.
 
+# Example
+
+Two groups of 768-dimensional embeddings, with a nuisance "topic" structure,
+are compared on the full samples, then with labels permuted within topic so
+that topic composition is held fixed under the null:
+
+```r
+library(fastcramer)
+cramer_statistic(x, y)                                    # exact statistic, 0.3 s at 5,000 x 5,000
+cramer_test(x, y, replicates = 999, block = topic)        # permutation p-value, labels shuffled within topic
+boot <- cramer_bootstrap(x, y, replicates = 1000, draw = 5000, block = topic)
+boot$summary$exceedance                                   # share of observed > permuted draws
+```
+
+The package vignette (`vignette("fastcramer")`) walks through this design on
+simulated embeddings, shows the agreement with `cramer::cramer.test()` for
+every kernel, and discusses the interpretation of the exceedance probability
+and the percentile interval.
+
 # Acknowledgements
 
 Development was supported by the Air Force Office of Scientific Research

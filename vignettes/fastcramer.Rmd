@@ -1,0 +1,167 @@
+---
+title: "Using fastcramer: comparing two multivariate samples at scale"
+author: "Alexander C. Furnas"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Using fastcramer: comparing two multivariate samples at scale}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 4)
+set.seed(20261002)
+```
+
+## The question
+
+Suppose each observation is a vector, such as a text embedding of a paper, and
+observations belong to one of two groups. Do the two groups occupy different
+regions of the space? The Cramér two-sample test (Baringhaus & Franz 2004)
+answers this without a parametric model. Its statistic compares the mean
+distance between the groups with the mean distances within each group,
+
+$$T = \frac{mn}{m+n}\left[\frac{2}{mn}\sum_{i,j}\phi(|x_i-y_j|^2)
+      - \frac{1}{m^2}\sum_{i,i'}\phi(|x_i-x_{i'}|^2)
+      - \frac{1}{n^2}\sum_{j,j'}\phi(|y_j-y_{j'}|^2)\right],$$
+
+with $\phi(z) = \sqrt{z}/2$ by default, so that $T$ is zero when the two
+groups are interchangeable and grows with their separation.
+
+`fastcramer` computes this statistic exactly as `cramer::cramer.test()` does,
+but roughly a thousand times faster, which changes what is practical: whole
+groups of thousands of observations instead of subsamples of a few hundred.
+
+## Simulated embeddings
+
+We simulate 768-dimensional embeddings for two groups whose means differ
+slightly along a random direction, with a nuisance structure of "topics" that
+shifts both groups together.
+
+```{r simulate}
+library(fastcramer)
+
+d <- 768
+n_topics <- 12
+topic_centres <- matrix(rnorm(n_topics * d, sd = 0.5), n_topics)
+partisan_axis <- rnorm(d); partisan_axis <- partisan_axis / sqrt(sum(partisan_axis^2))
+
+simulate_group <- function(n, shift, topic_probs) {
+  topic <- sample(n_topics, n, replace = TRUE, prob = topic_probs)
+  emb   <- topic_centres[topic, ] + matrix(rnorm(n * d), n) + shift * matrix(partisan_axis, n, d, byrow = TRUE)
+  list(emb = emb, topic = topic)
+}
+
+# group A: 3,000 observations, spread over topics; group B: 600, concentrated
+# in a few topics AND shifted along the partisan axis
+A <- simulate_group(3000, shift = 0,   topic_probs = rep(1, n_topics))
+B <- simulate_group(600,  shift = 0.6, topic_probs = c(rep(3, 4), rep(1, n_topics - 4)))
+```
+
+## The statistic
+
+```{r statistic}
+cramer_statistic(A$emb, B$emb)
+system.time(cramer_statistic(A$emb, B$emb))
+```
+
+All five kernels of the `cramer` package are available and agree with it:
+
+```{r kernels}
+sapply(c("cramer", "bahr", "log", "fraca", "fracb"),
+       function(k) cramer_statistic(A$emb[1:300, ], B$emb[1:300, ], kernel = k))
+```
+
+```{r check-cramer, eval = requireNamespace("cramer", quietly = TRUE)}
+cramer::cramer.test(A$emb[1:300, ], B$emb[1:300, ], just.statistic = TRUE)$statistic
+```
+
+## A permutation test
+
+`cramer_test()` pools the samples and reassigns group labels at random. The
+Monte Carlo p-value is the share of permutations with a statistic at least
+as large as the observed one.
+
+```{r test}
+cramer_test(A$emb[1:400, ], B$emb[1:400, ], replicates = 199)
+```
+
+## Holding nuisance structure fixed with strata
+
+The two groups also differ in topic composition. Is the separation only
+topic sorting? Permuting labels *within topic* preserves each topic's group
+composition, so the null distribution reflects what the statistic would be if
+group membership carried no information beyond topic.
+
+```{r blocked}
+emb   <- rbind(A$emb, B$emb)
+topic <- c(A$topic, B$topic)
+res_free    <- cramer_test(A$emb[1:400, ], B$emb[1:400, ], replicates = 199)
+res_blocked <- cramer_test(A$emb[1:400, ], B$emb[1:400, ], replicates = 199,
+                           block = c(A$topic[1:400], B$topic[1:400]))
+c(unblocked = res_free$p.value, within_topic = res_blocked$p.value)
+```
+
+The blocked null typically has larger statistics than the free null, because
+topic composition is no longer "explained away" by the permutation, so the
+test is more conservative. Here the shift along the partisan axis survives it.
+
+## Very large samples: bootstrap draws against a blocked null
+
+When the groups contain hundreds of thousands of observations, even a fast
+statistic cannot be evaluated on the full data, and one would not want to:
+with that many observations any difference is "significant". The design used
+in Furnas, Gao, Yin and Wang (2026) instead compares two distributions of
+replicates. Each *observed* replicate draws `draw` observations with
+replacement from each group and computes the statistic; each *permuted*
+replicate first shuffles the group labels within strata, then draws in the
+same way. `cramer_bootstrap()` runs both and summarises them by
+
+* the **exceedance probability**, the share of observed/permuted pairs in
+  which the observed statistic is larger, and
+* the **percentile interval** of the pairwise differences,
+
+rather than by a test of the two replicate means, whose p-value would scale
+with the number of replicates instead of with the data.
+
+```{r bootstrap}
+boot <- cramer_bootstrap(A$emb, B$emb, replicates = 100, draw = 500,
+                         block = topic, seed = 1)
+boot
+```
+
+```{r bootstrap-plot}
+reps <- boot$replicates
+hist(reps$statistic[reps$type == "permuted"], col = "grey80", border = NA,
+     xlim = range(reps$statistic), main = "", xlab = "Cramér statistic")
+hist(reps$statistic[reps$type == "observed"], col = adjustcolor("firebrick", 0.6),
+     border = NA, add = TRUE)
+legend("topright", fill = c("grey80", adjustcolor("firebrick", 0.6)),
+       legend = c("within-topic permuted draws", "observed draws"), bty = "n")
+```
+
+The default `draw` is the smaller of 5,000 and the smaller group's size, so
+small groups are not resampled far beyond what they contain. Note that the
+statistic's scale grows with `draw` through the $mn/(m+n)$ factor: compare
+observed and permuted draws of the same size, not raw statistics across
+different designs.
+
+## Performance notes
+
+The kernel evaluates each block of the cross-product with BLAS and accumulates
+the distances, kernel values and sums in one pass. It is bound by memory
+bandwidth rather than by the BLAS, so a tuned BLAS helps little and several
+parallel workers on one machine share bandwidth; expect roughly 0.3 s per
+5,000-by-5,000 statistic alone and about 1.5 s per worker with ten workers.
+For permutation designs over many groups, parallelise across groups with
+`parallel::mclapply()` and keep one BLAS thread per worker.
+
+## References
+
+Baringhaus, L., & Franz, C. (2004). On a new multivariate two-sample test.
+*Journal of Multivariate Analysis*, 88(1), 190–206.
+
+Furnas, A. C., Gao, J., Yin, Y., & Wang, D. (2026). Partisan disparities in
+the production and uptake of science. Working paper.

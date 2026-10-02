@@ -17,6 +17,7 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports: Rcpp (>= 1.0.0), stats
 LinkingTo: Rcpp
-Suggests: cramer, testthat (>= 3.0.0)
+Suggests: cramer, testthat (>= 3.0.0), knitr, rmarkdown
+VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: https://github.com/alexanderfurnas/fastcramer

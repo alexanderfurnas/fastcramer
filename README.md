@@ -34,11 +34,15 @@ draws taken after permuting group labels within strata (`block`), summarised
 by the exceedance probability and the percentile interval of the pairwise
 differences.
 
+A worked example, including the blocked permutation null and the bootstrap
+design, is in the vignette: `vignette("fastcramer")` after installation, or
+[`vignettes/fastcramer.Rmd`](vignettes/fastcramer.Rmd) in this repository.
+
 ## Installation
 
 ```r
 # install.packages("devtools")
-devtools::install_local("path/to/fastcramer")
+devtools::install_github("alexanderfurnas/fastcramer", build_vignettes = TRUE)
 ```
 
 Requires a C++ compiler (Xcode Command Line Tools on macOS, Rtools on Windows).
